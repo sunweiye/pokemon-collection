@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" th:lang="${#locale.language}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="language" th:content="${#locale.language}">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <title>Page not found</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f8fafc;
+            color: #172033;
+        }
+
+        body {
+            display: grid;
+            min-height: 100vh;
+            margin: 0;
+            place-items: center;
+        }
+
+        main {
+            max-width: 32rem;
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0 0 0.75rem;
+            font-size: clamp(2rem, 6vw, 3.5rem);
+        }
+
+        p {
+            margin: 0 0 1.5rem;
+            color: #64748b;
+        }
+
+        a {
+            color: #4f46e5;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Page not found</h1>
+    <p>The page you are looking for does not exist.</p>
+    <a href="/">Back to home</a>
+</main>
+</body>
+</html>

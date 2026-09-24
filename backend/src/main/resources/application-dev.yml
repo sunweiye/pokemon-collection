@@ -1,0 +1,7 @@
+spring:
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:false}
+
+app:
+  frontend:
+    vite-dev-server-url: http://localhost:5173

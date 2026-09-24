@@ -1,0 +1,51 @@
+name: pokemon-collection
+
+# Database connection values must come from the root .env file (see .env.example).
+# Compose fails during interpolation with a clear message when one is missing.
+#
+# The only entry point is http://localhost:8080 (page shells + /api + /assets).
+# For development with hot reload, add docker-compose.dev.yml.
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}
+    # No host port: only the backend reaches the database, over the compose network.
+    # docker-compose.dev.yml publishes it for local tools (psql, IDE).
+    volumes:
+      - pokemon-collection-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:?POSTGRES_HOST is required in .env}
+      POSTGRES_PORT: ${POSTGRES_PORT:?POSTGRES_PORT is required in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required in .env}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required in .env}
+      APP_POKEMON_CACHE_TTL_DAYS: ${APP_POKEMON_CACHE_TTL_DAYS:-7}
+      LOG_PATH: ${LOG_PATH:-logs}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      THYMELEAF_CACHE: ${THYMELEAF_CACHE:-true}
+      # The image contains the compiled React bundles and serves both page shells and API.
+    ports:
+      - "8080:8080" # the application's only entry point
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pokemon-collection-postgres-data:
+    name: pokemon-collection-postgres-data

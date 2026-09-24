@@ -1,0 +1,37 @@
+# Development override: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+# The app is still opened only through http://localhost:8080. The frontend service is the
+# Vite dev server; the browser loads modules and the hot-reload socket from port 5173,
+# but 5173 is not an entry point (no HTML pages, no API proxy).
+
+services:
+  postgres:
+    ports:
+      - "65432:5432" # development only: database access from host tools (psql, IDE)
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
+      - ./.m2:/root/.m2
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      THYMELEAF_CACHE: ${THYMELEAF_CACHE:-false}
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "5173:5173"
+
+volumes:
+  frontend-node-modules:

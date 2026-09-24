@@ -1,0 +1,14 @@
+{
+  "src/login/main.tsx": {
+    "file": "assets/login-test.js",
+    "isEntry": true,
+    "imports": [],
+    "css": []
+  },
+  "src/app/main.tsx": {
+    "file": "assets/app-test.js",
+    "isEntry": true,
+    "imports": [],
+    "css": []
+  }
+}

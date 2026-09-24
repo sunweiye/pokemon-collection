@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" th:lang="${#locale.language}" th:fragment="shell">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="language" th:content="${#locale.language}">
+    <meta name="_csrf" th:content="${csrfToken.token}">
+    <meta name="_csrf_header" th:content="${csrfToken.headerName}">
+    <link rel="icon" type="image/x-icon" th:href="${faviconPath}">
+    <link th:each="css : ${cssPaths}" rel="stylesheet" th:href="${css}">
+</head>
+<body>
+<div id="root"></div>
+<script th:if="${viteDevMode}" type="module" th:inline="javascript">
+    import RefreshRuntime from /*[[${viteReactRefreshPath}]]*/ "/@react-refresh";
+    RefreshRuntime.injectIntoGlobalHook(window);
+    window.$RefreshReg$ = () => {};
+    window.$RefreshSig$ = () => (type) => type;
+    window.__vite_plugin_react_preamble_installed__ = true;
+</script>
+<script th:if="${viteDevMode}" type="module" th:src="${viteClientPath}"></script>
+<script type="module" th:src="${jsPath}"></script>
+</body>
+</html>

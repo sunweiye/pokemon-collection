@@ -1,0 +1,8 @@
+FROM maven:3.9-eclipse-temurin-21
+
+WORKDIR /app
+
+COPY dev-entrypoint.sh /usr/local/bin/dev-entrypoint.sh
+RUN chmod +x /usr/local/bin/dev-entrypoint.sh
+
+CMD ["dev-entrypoint.sh"]

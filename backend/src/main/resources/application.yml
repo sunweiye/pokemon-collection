@@ -1,0 +1,49 @@
+spring:
+  config:
+    import: optional:file:../.env[.properties]
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:pokemon_collection}
+    username: ${POSTGRES_USER:app}
+    password: ${POSTGRES_PASSWORD:app}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  thymeleaf:
+    cache: ${THYMELEAF_CACHE:true}
+  mvc:
+    static-path-pattern: /assets/**
+  web:
+    resources:
+      static-locations: classpath:/static/assets/
+
+server:
+  port: 8080
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        http-only: true
+        secure: ${SESSION_COOKIE_SECURE:false}
+
+logging:
+  file:
+    # LOG_PATH comes from .env (default: logs), relative to the working directory or absolute.
+    name: ${LOG_PATH:logs}/pokemon-collection.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_PATH:logs}/pokemon-collection-%d{yyyy-MM-dd}.%i.log.gz
+      max-file-size: 10MB
+      max-history: 30
+  level:
+    root: INFO
+    com.example.pokemoncollection: INFO
+
+app:
+  pokemon-cache:
+    ttl-days: ${APP_POKEMON_CACHE_TTL_DAYS:7}
+  pokeapi:
+    base-url: https://pokeapi.co/api/v2
+    timeout-seconds: 5
