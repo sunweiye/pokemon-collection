@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { makeApiError } from '../test/apiError'
 
 function setMetaToken(token?: string) {
   document.head.innerHTML = `
@@ -16,19 +17,6 @@ function makeAdapter() {
     headers: {},
     config,
   }))
-}
-
-function makeAxiosError(status: number, url: string) {
-  const error = new axios.AxiosError(`HTTP ${status}`)
-  error.config = { url } as never
-  error.response = {
-    status,
-    statusText: `HTTP ${status}`,
-    headers: {},
-    config: error.config,
-    data: { error: 'UNAUTHORIZED', message: 'Unauthorized' },
-  }
-  return error
 }
 
 describe('http CSRF handling', () => {
@@ -108,7 +96,7 @@ describe('http CSRF handling', () => {
     Object.defineProperty(testWindow, 'location', { value: { href: '/' }, configurable: true })
     vi.stubGlobal('window', testWindow)
     const { http } = await import('./http')
-    http.defaults.adapter = vi.fn().mockRejectedValue(makeAxiosError(401, '/api/collection'))
+    http.defaults.adapter = vi.fn().mockRejectedValue(makeApiError(401, 'UNAUTHORIZED', '/api/collection'))
 
     await expect(http.get('/api/collection')).rejects.toMatchObject({ response: { status: 401 } })
 
@@ -120,7 +108,7 @@ describe('http CSRF handling', () => {
     Object.defineProperty(testWindow, 'location', { value: { href: '/login' }, configurable: true })
     vi.stubGlobal('window', testWindow)
     const { http } = await import('./http')
-    http.defaults.adapter = vi.fn().mockRejectedValue(makeAxiosError(401, '/api/auth/login'))
+    http.defaults.adapter = vi.fn().mockRejectedValue(makeApiError(401, 'UNAUTHORIZED', '/api/auth/login'))
 
     await expect(http.post('/api/auth/login')).rejects.toMatchObject({ response: { status: 401 } })
 

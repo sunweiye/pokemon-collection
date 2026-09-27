@@ -2,6 +2,7 @@ package com.example.pokemoncollection.pokemon;
 
 import com.example.pokemoncollection.common.exception.PokemonNotFoundException;
 import com.example.pokemoncollection.config.PokemonCacheProperties;
+import com.example.pokemoncollection.pokemon.dto.PokemonDetailDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -18,6 +19,7 @@ import org.springframework.cache.caffeine.CaffeineCacheManager;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,7 +45,7 @@ class PokemonLookupServiceTest {
 
     @Test
     void l1HitDoesNotCallDatabaseOrApi(CapturedOutput output) {
-        var cached = new com.example.pokemoncollection.pokemon.dto.PokemonDetailDto(25, "pikachu", "sprite", java.util.List.of("electric"));
+        var cached = new PokemonDetailDto(25, "pikachu", "sprite", List.of("electric"));
         cacheManager.getCache("pokemonById").put(25, cached);
 
         assertThat(service.getById(25)).isEqualTo(cached);
@@ -57,8 +59,8 @@ class PokemonLookupServiceTest {
         Level previousLevel = logger.getLevel();
         try {
             logger.setLevel(Level.DEBUG);
-            var cached = new com.example.pokemoncollection.pokemon.dto.PokemonDetailDto(
-                    25, "pikachu", "sprite", java.util.List.of("electric"));
+            var cached = new PokemonDetailDto(
+                    25, "pikachu", "sprite", List.of("electric"));
             cacheManager.getCache("pokemonById").put(25, cached);
 
             service.getById(25);
@@ -122,7 +124,7 @@ class PokemonLookupServiceTest {
         when(repository.findByPokemonId(25)).thenReturn(Optional.of(existing));
         when(pokeApiClient.fetchByIdentifier("25")).thenThrow(new PokemonNotFoundException("25"));
         cacheManager.getCache("pokemonByName").put("pikachu",
-                new com.example.pokemoncollection.pokemon.dto.PokemonDetailDto(25, "pikachu", "sprite", java.util.List.of()));
+                new PokemonDetailDto(25, "pikachu", "sprite", List.of()));
 
         assertThatThrownBy(() -> service.getById(25)).isInstanceOf(PokemonNotFoundException.class);
 

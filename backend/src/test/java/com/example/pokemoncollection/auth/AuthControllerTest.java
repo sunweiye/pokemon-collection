@@ -7,17 +7,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,18 +35,18 @@ class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private TrainerRepository trainerRepository;
 
-    @MockBean
+    @MockitoBean
     private PasswordEncoder passwordEncoder;
 
-    @MockBean
+    @MockitoBean
     private AuthSessionService authSessionService;
 
     @Test
     void loginTrimsUsernameBeforeParameterizedRepositoryLookup(CapturedOutput output) throws Exception {
-        Trainer trainer = org.mockito.Mockito.mock(Trainer.class);
+        Trainer trainer = mock(Trainer.class);
         when(trainerRepository.findByUsername("ash")).thenReturn(Optional.of(trainer));
         when(trainer.getId()).thenReturn(1L);
         when(trainer.getUsername()).thenReturn("ash");
@@ -58,20 +61,20 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.username").value("ash"));
 
         verify(trainerRepository).findByUsername(eq("ash"));
-        verify(authSessionService).login(org.mockito.ArgumentMatchers.any(), eq(1L));
+        verify(authSessionService).login(any(), eq(1L));
         assertThat(output).contains("event=AUTH_LOGIN_SUCCESS username=ash trainerId=1")
                 .doesNotContain("stored-hash");
     }
 
     @Test
     void logoutInvalidatesSessionAndLogsTrainer(CapturedOutput output) throws Exception {
-        when(authSessionService.getCurrentTrainerId(org.mockito.ArgumentMatchers.any()))
+        when(authSessionService.getCurrentTrainerId(any()))
                 .thenReturn(Optional.of(1L));
 
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isNoContent());
 
-        verify(authSessionService).logout(org.mockito.ArgumentMatchers.any());
+        verify(authSessionService).logout(any());
         assertThat(output).contains("event=AUTH_LOGOUT trainerId=1");
     }
 
@@ -83,13 +86,13 @@ class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error").value("UNAUTHORIZED"));
 
-        verify(trainerRepository, never()).findByUsername(org.mockito.ArgumentMatchers.anyString());
+        verify(trainerRepository, never()).findByUsername(anyString());
         assertThat(output).contains("event=AUTH_LOGIN_FAILED username=");
     }
 
     @Test
     void failedLoginDoesNotLogSubmittedPassword(CapturedOutput output) throws Exception {
-        Trainer trainer = org.mockito.Mockito.mock(Trainer.class);
+        Trainer trainer = mock(Trainer.class);
         when(trainerRepository.findByUsername("ash")).thenReturn(Optional.of(trainer));
         when(trainer.getPasswordHash()).thenReturn("stored-hash");
         when(passwordEncoder.matches("unique-test-password", "stored-hash")).thenReturn(false);
@@ -106,15 +109,15 @@ class AuthControllerTest {
     @Test
     void unknownUsernameStillPerformsBcryptComparison() throws Exception {
         when(trainerRepository.findByUsername("missing")).thenReturn(Optional.empty());
-        when(passwordEncoder.matches(eq("password"), org.mockito.ArgumentMatchers.anyString())).thenReturn(false);
+        when(passwordEncoder.matches(eq("password"), anyString())).thenReturn(false);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"missing\",\"password\":\"password\"}"))
                 .andExpect(status().isUnauthorized());
 
-        verify(passwordEncoder).matches(eq("password"), org.mockito.ArgumentMatchers.anyString());
-        verify(authSessionService, never()).login(org.mockito.ArgumentMatchers.any(), eq(1L));
+        verify(passwordEncoder).matches(eq("password"), anyString());
+        verify(authSessionService, never()).login(any(), eq(1L));
     }
 
 }

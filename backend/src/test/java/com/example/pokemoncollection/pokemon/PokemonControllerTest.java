@@ -10,21 +10,25 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -39,20 +43,20 @@ class PokemonControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private PokemonLookupService lookupService;
 
-    @MockBean
+    @MockitoBean
     private CollectionService collectionService;
 
-    @MockBean
+    @MockitoBean
     private AuthSessionService authSessionService;
 
     @Test
     void searchIncludesCurrentTrainersCollectionStatus() throws Exception {
         when(lookupService.getByName("pikachu"))
                 .thenReturn(new PokemonDetailDto(25, "pikachu", "sprite", List.of("electric")));
-        when(authSessionService.getCurrentTrainerId(org.mockito.ArgumentMatchers.any())).thenReturn(Optional.of(7L));
+        when(authSessionService.getCurrentTrainerId(any())).thenReturn(Optional.of(7L));
         when(collectionService.contains(7L, 25)).thenReturn(true);
 
         mockMvc.perform(get("/api/pokemon/search")
@@ -70,28 +74,27 @@ class PokemonControllerTest {
     void anonymousSearchReturnsNotInCollectionWithoutCheckingOwnership() throws Exception {
         when(lookupService.getById(25))
                 .thenReturn(new PokemonDetailDto(25, "pikachu", "sprite", List.of("electric")));
-        when(authSessionService.getCurrentTrainerId(org.mockito.ArgumentMatchers.any())).thenReturn(Optional.empty());
+        when(authSessionService.getCurrentTrainerId(any())).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/pokemon/25").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.inCollection").value(false));
 
-        verify(collectionService, never()).contains(org.mockito.ArgumentMatchers.anyLong(),
-                org.mockito.ArgumentMatchers.anyInt());
+        verify(collectionService, never()).contains(anyLong(), anyInt());
     }
 
     @Test
     void numericSearchQueryUsesPokemonIdLookup() throws Exception {
         when(lookupService.getById(25))
                 .thenReturn(new PokemonDetailDto(25, "pikachu", "sprite", List.of("electric")));
-        when(authSessionService.getCurrentTrainerId(org.mockito.ArgumentMatchers.any())).thenReturn(Optional.empty());
+        when(authSessionService.getCurrentTrainerId(any())).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/pokemon/search").param("query", "25"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pokemonId").value(25));
 
         verify(lookupService).getById(25);
-        verify(lookupService, never()).getByName(org.mockito.ArgumentMatchers.anyString());
+        verify(lookupService, never()).getByName(anyString());
     }
 
     @Test

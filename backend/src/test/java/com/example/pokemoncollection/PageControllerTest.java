@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.ui.Model;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,7 +40,7 @@ class PageControllerTest {
         when(viteManifestService.viteClientPath()).thenReturn("http://localhost:5173/@vite/client");
         when(viteManifestService.viteReactRefreshPath()).thenReturn("http://localhost:5173/@react-refresh");
         when(viteManifestService.jsPath("src/login/main.tsx")).thenReturn("http://localhost:5173/src/login/main.tsx");
-        when(viteManifestService.cssPaths("src/login/main.tsx")).thenReturn(java.util.List.of());
+        when(viteManifestService.cssPaths("src/login/main.tsx")).thenReturn(List.of());
 
         assertThat(controller.loginPage(request, model, csrfToken)).isEqualTo("login");
         verify(model).addAttribute("csrfToken", csrfToken);

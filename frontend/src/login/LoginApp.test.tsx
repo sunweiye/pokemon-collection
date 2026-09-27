@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import axios from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LoginApp } from './LoginApp'
 import { login } from '../api/client'
+import { makeApiError } from '../test/apiError'
 
 vi.mock('../api/client', () => ({
   login: vi.fn(),
@@ -14,14 +14,7 @@ describe('LoginApp', () => {
   afterEach(() => vi.unstubAllGlobals())
 
   it('trims the username and shows the authentication error inline', async () => {
-    const error = new axios.AxiosError('Unauthorized')
-    error.response = {
-      status: 401,
-      statusText: 'Unauthorized',
-      headers: {},
-      config: {} as never,
-      data: { error: 'UNAUTHORIZED', message: 'Invalid username or password.' },
-    }
+    const error = makeApiError(401, 'UNAUTHORIZED', '/api/auth/login')
     vi.mocked(login).mockRejectedValue(error)
     const user = userEvent.setup()
 
@@ -46,14 +39,7 @@ describe('LoginApp', () => {
   })
 
   it('explains a CSRF 403 separately from invalid credentials', async () => {
-    const error = new axios.AxiosError('Forbidden')
-    error.response = {
-      status: 403,
-      statusText: 'Forbidden',
-      headers: {},
-      config: {} as never,
-      data: { error: 'CSRF_FORBIDDEN', message: 'The security token is missing or expired.' },
-    }
+    const error = makeApiError(403, 'CSRF_FORBIDDEN', '/api/auth/login')
     vi.mocked(login).mockRejectedValue(error)
     const user = userEvent.setup()
 
@@ -93,14 +79,7 @@ describe('LoginApp', () => {
   })
 
   it('shows the unavailable message for a 500 response', async () => {
-    const error = new axios.AxiosError('Internal Server Error')
-    error.response = {
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: {},
-      config: {} as never,
-      data: { error: 'INTERNAL_ERROR', message: 'Unexpected error.' },
-    }
+    const error = makeApiError(500, 'INTERNAL_ERROR', '/api/auth/login')
     vi.mocked(login).mockRejectedValue(error)
     const user = userEvent.setup()
 

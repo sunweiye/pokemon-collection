@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import axios from 'axios'
+import { AxiosError } from 'axios'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { addToCollection, getCollection, getMe, logout, removeFromCollection, searchPokemon } from '../api/client'
+import { makeApiError } from '../test/apiError'
 import type { CollectionEntry, CollectionPage, Pokemon } from '../types/api'
 import { App } from './App'
 
@@ -35,19 +36,6 @@ const collectionEntry: CollectionEntry = {
 
 function makeCollectionPage(content: CollectionEntry[], page = 0, size = 6, totalElements = content.length, totalPages = 1): CollectionPage {
   return { content, page, size, totalElements, totalPages }
-}
-
-function makeApiError(status: number, errorCode: string, url = '/api/test') {
-  const error = new axios.AxiosError(`HTTP ${status}`)
-  error.config = { url } as never
-  error.response = {
-    status,
-    statusText: `HTTP ${status}`,
-    headers: {},
-    config: error.config,
-    data: { error: errorCode, message: `HTTP ${status}` },
-  }
-  return error
 }
 
 function renderApp() {
@@ -298,14 +286,7 @@ describe('App', () => {
 
   it('handles a duplicate add response and prevents another attempt', async () => {
     vi.mocked(searchPokemon).mockResolvedValue(pokemon)
-    const error = new axios.AxiosError('Conflict')
-    error.response = {
-      status: 409,
-      statusText: 'Conflict',
-      headers: {},
-      config: {} as never,
-      data: { error: 'DUPLICATE_COLLECTION_ENTRY', message: 'Already collected.' },
-    }
+    const error = makeApiError(409, 'DUPLICATE_COLLECTION_ENTRY', '/api/collection')
     vi.mocked(addToCollection).mockRejectedValue(error)
     renderApp()
 
@@ -317,14 +298,7 @@ describe('App', () => {
   })
 
   it('shows a server error when search fails unexpectedly', async () => {
-    const error = new axios.AxiosError('Internal Server Error')
-    error.response = {
-      status: 500,
-      statusText: 'Internal Server Error',
-      headers: {},
-      config: {} as never,
-      data: { error: 'INTERNAL_ERROR', message: 'Unexpected error.' },
-    }
+    const error = makeApiError(500, 'INTERNAL_ERROR', '/api/pokemon/search')
     vi.mocked(searchPokemon).mockRejectedValue(error)
     renderApp()
 
@@ -359,7 +333,7 @@ describe('App', () => {
   })
 
   it('shows a network error when search receives no response', async () => {
-    vi.mocked(searchPokemon).mockRejectedValue(new axios.AxiosError('Network Error'))
+    vi.mocked(searchPokemon).mockRejectedValue(new AxiosError('Network Error'))
     renderApp()
 
     await searchForPikachu()
